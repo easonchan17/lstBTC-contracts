@@ -4,7 +4,7 @@ import { HardhatUserConfig} from "hardhat/config";
 import { HttpNetworkUserConfig } from "hardhat/types";
 import '@openzeppelin/hardhat-upgrades';
 
-import "@nomicfoundation/hardhat-verify"
+import "@nomicfoundation/hardhat-verify";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
@@ -15,20 +15,22 @@ import "hardhat-contract-sizer";
 
 dotenv.config();
 
-const infuraNetwork = (
-	accounts: any, 
-	network: string,
-	chainId?: number,
-	gas?: number
-): HttpNetworkUserConfig => {
-	return {
-		url: `https://${network}.infura.io/v3/${process.env.PROJECT_ID}`,
-		chainId,
-		gas,
-		accounts,
-		gasPrice: 200000000000,
-	}
+function toggleSensitiveInfo(text:any, visibleChars:number = 4) {
+	if (!text || text.length <= visibleChars * 2) return "*";
+
+	const hiddenPart = '*'.repeat(text.length - visibleChars * 2);
+	return text.slice(0, 4) + hiddenPart + text.slice(-4);
 }
+
+const {PRIVATE_KEY,ETHERSCAN_API_KEY,NETNAME,NETWORK} = process.env;
+console.log(`PRIVATE_KEY=${toggleSensitiveInfo(PRIVATE_KEY)}`);
+console.log(`ETHERSCAN_API_KEY=${toggleSensitiveInfo(ETHERSCAN_API_KEY)}`);
+console.log(`NETWORK=${NETWORK}`);
+
+// if (NETWORK !== NETNAME) {
+// 	console.log(`${NETWORK} !== ${NETNAME}`);
+// 	process.exit(1);
+// }
 
 const config: HardhatUserConfig = {
 	solidity: {
@@ -44,39 +46,19 @@ const config: HardhatUserConfig = {
 		],
 	},
 	networks: {
-		mumbai: {
-			url: "https://rpc-mumbai.maticvigil.com",
-			chainId: 80001,
-			accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-		},
-		core_devnet: {
-			url: "https://rpc.dev.btcs.network/",
-			chainId: 1112,
-			accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-		},
-		core_testnet: {
-			url: "https://rpc.test.btcs.network/",
-			chainId: 1115,
+		core_testnet2: {
+			url: "https://rpc.test2.btcs.network/",
+			chainId: 1114,
+			gasPrice: 35000000000,
 			accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
 		},
 		core_mainnet: {
 			url: "https://rpc.coredao.org/",
 			chainId: 1116,
-			gasPrice: 30000000000,
+			gasPrice: 35000000000,
 			accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
 		}
-		// bsc: {
-		// 	url: "https://bsc-dataseed.binance.org/",
-		// 	chainId: 56,
-		// 	gasPrice: 20000000000,
-		// 	accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-		// },
-		// bsc_testnet: {
-		// 	url: "https://bsc-testnet.publicnode.com",
-		// 	chainId: 97,
-		// 	accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-		// },
-	},	
+	},
   	paths: {
 		artifacts: "artifacts",
 		deploy: "deploy",
@@ -100,19 +82,11 @@ const config: HardhatUserConfig = {
 		apiKey: process.env.ETHERSCAN_API_KEY,
 		customChains: [
 			{
-				network: "core_devnet",
-				chainId: 1112,
+				network: "core_testnet2",
+				chainId: 1114,
 				urls: {
-					apiURL: "http://18.221.10.178:8090/api",
-					browserURL: "https://scan.dev.btcs.network/"
-				}
-			},
-			{
-				network: "core_testnet",
-				chainId: 1115,
-				urls: {
-					apiURL: "https://api.test.btcs.network/api",
-					browserURL: "https://scan.test.btcs.network/"
+					apiURL: "https://api.test2.btcs.network/api",
+					browserURL: "https://scan.test2.btcs.network/"
 				}
 			},
 			{
