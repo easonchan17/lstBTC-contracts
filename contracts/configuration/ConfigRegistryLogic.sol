@@ -59,7 +59,7 @@ contract ConfigRegistryLogic is IConfigRegistry, AccessControlBase, UUPSUpgradea
     }
 
     // Default Bitcoin confirmation requirement (6 blocks)
-    uint32 public constant DEFAULT_BITCOIN_CONFIRMATIONS = 6;
+    uint32 public constant DEFAULT_BITCOIN_CONFIRMATIONS = 1;
 
     // Default native chain confirmation requirement (12 blocks)
     uint32 public constant DEFAULT_NATIVE_CONFIRMATIONS = 12;

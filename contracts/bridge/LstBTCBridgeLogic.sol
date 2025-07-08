@@ -381,8 +381,18 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         uint64 pendingPayWrappedAmount = _processPegInBatch(pegInIds, custodianId, batchId);
         uint64 pendingPayBTCAmount = _processPegOutBatch(pegOutIds, custodianId, batchId);
 
-        batches[batchId].pegInIds = pegInIds;
-        batches[batchId].pegOutIds = pegOutIds;
+        if (pegInIds.length == 0) {
+            batches[batchId].isPegInSettled = true;
+        } else {
+            batches[batchId].pegInIds = pegInIds;
+        }
+
+        if (pegOutIds.length == 0) {
+            batches[batchId].isPegOutSettled = true;
+        } else {
+            batches[batchId].pegOutIds = pegOutIds;
+        }
+
         custodianBatches[custodianId].push(batchId);
 
         emit BatchProcessed(
@@ -411,8 +421,18 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         uint64 pendingRefundBTC = _rejectPegInBatch(pegInIds, custodianId, batchId);
         uint64 pendingRefundWrappedBTC = _rejectPegOutBatch(pegOutIds, custodianId, batchId);
 
-        batches[batchId].pegInIds = pegInIds;
-        batches[batchId].pegOutIds = pegOutIds;
+        if (pegInIds.length == 0) {
+            batches[batchId].isPegInSettled = true;
+        } else {
+            batches[batchId].pegInIds = pegInIds;
+        }
+
+        if (pegOutIds.length == 0) {
+            batches[batchId].isPegOutSettled = true;
+        } else {
+            batches[batchId].pegOutIds = pegOutIds;
+        }
+
         custodianBatches[custodianId].push(batchId);
 
         emit BatchRejected(
@@ -513,11 +533,7 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         if (latestBatchId != 0) {
             Batch storage batch = batches[latestBatchId];
 
-            if (batch.pegInIds.length != 0 && !batch.isPegInSettled) {
-                revert PendingBatchFound(custodianId, latestBatchId);
-            }
-
-            if (batch.pegOutIds.length != 0 && !batch.isPegOutSettled) {
+            if (!batch.isPegInSettled || !batch.isPegOutSettled) {
                 revert PendingBatchFound(custodianId, latestBatchId);
             }
         }
@@ -672,13 +688,13 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         }
 
         Batch storage batch = batches[latestBatchId];
-        uint16 pegInCount = uint16(batch.pegInIds.length);
-
-        if (pegInCount == 0 || batch.isPegInSettled) {
+        if (batch.isPegInSettled) {
             revert NoPegInToSettle(_custodianId, latestBatchId);
         }
 
         uint64 settledAmount;
+
+        uint16 pegInCount = batch.pegInIds.length.toUint16();
         for (uint16 i = 0; i < pegInCount; ++i) {
             settledAmount += pegInRequests[batch.pegInIds[i]].settlePegInRequest(_custodianId, _status);
         }
@@ -813,14 +829,13 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         }
 
         Batch storage batch = batches[latestBatchId];
-        uint16 pegOutCount = uint16(batch.pegOutIds.length);
-
-        if (pegOutCount == 0 || batch.isPegOutSettled) {
+        if (batch.isPegOutSettled) {
             revert NoPegOutToSettle(_custodianId, latestBatchId);
         }
 
         uint64 settledAmount;
 
+        uint16 pegOutCount = batch.pegOutIds.length.toUint16();
         for (uint16 i = 0; i < pegOutCount; ++i) {
             settledAmount += pegOutRequests[batch.pegOutIds[i]].settlePegOutRequest(_custodianId, _status);
         }
@@ -830,7 +845,6 @@ contract LstBTCBridgeLogic is ILstBTCBridge, LstBTCBridgeStorage,
         }
 
         batch.isPegOutSettled = true;
-
         settledIds = batch.pegOutIds;
         isCompleted = batch.isPegInSettled;
     }
